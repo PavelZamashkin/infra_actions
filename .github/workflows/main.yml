@@ -66,6 +66,13 @@ jobs:
       needs: build_and_push_to_docker_hub
       steps:
       - name: executing remote ssh commands to deploy
+        env:
+          SSH_PASSPHRASE: ${{secrets.PASSPHRASE}}
+          SSH_PRIVATE_KEY: ${{secrets.SSH_KEY}}
+        run:
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          echo 'echo $SSH_PASSPHRASE' > ~/.ssh_askpass && chmod +x ~/.ssh_askpass
+          echo "$SSH_PRIVATE_KEY" | tr -d '\r' | DISPLAY=None SSH_ASKPASS=~/.ssh_askpass ssh-add - >/dev/null
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST }}
@@ -78,3 +85,14 @@ jobs:
             #остановка всех контейнеров
             sudo docker stop $(sudo docker ps -a -q)
             sudo docker run --rm -d -p 5000:5000 ${{ secrets.DOCKER_USERNAME }}/sprint16
+    - name: Setup SSH passphrase
+
+      run: |
+        ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+        echo 'echo $SSH_PASSPHRASE' > ~/.ssh_askpass && chmod +x ~/.ssh_askpass
+        echo "$SSH_PRIVATE_KEY" | tr -d '\r' | DISPLAY=None SSH_ASKPASS=~/.ssh_askpass ssh-add - >/dev/null
+
+    # Debug print out the added identities. This will prove SSH_AUTH_SOCK
+    # is persisted across job steps
+    - name: Print ssh-add identities
+      runs: ssh-add -l
