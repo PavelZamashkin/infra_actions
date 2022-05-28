@@ -67,7 +67,6 @@ jobs:
       steps:
       - name: executing remote ssh commands to deploy
         uses: appleboy/ssh-action@master
-      - uses: webfactory/ssh-agent@v0.4.1
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
